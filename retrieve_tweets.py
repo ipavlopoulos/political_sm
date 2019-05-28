@@ -82,7 +82,6 @@ def get_replies(tweet):
     user = tweet.user.screen_name
     tweet_id = tweet.id
     max_id = None
-    print("looking for replies to: %s" % tweet.id_str)
     while True:
         try:
             replies = api.search(q="to:%s" % user, since_id=tweet_id, max_id=max_id, count=100, tweet_mode="extended")
@@ -173,7 +172,7 @@ def get_tweets(mps_file,
                 continue
             break
 
-        print "User", username, start_datetime, party
+        print "Retrieve tweets from MP {} of {} party from {} to {}".format(username, party, start_datetime, end_date)
         # # if user exists in db continue
         # if db.get_user(user.id_str, mps_db): continue
         # save user in db
@@ -204,7 +203,7 @@ def get_tweets(mps_file,
                     status_text = get_text(status._json)
                     if not db.get_tweet(status.id_str, database):
                         db.save_tweet(status, db_user_id, mps_db, text=status_text)
-                    statuses.append(status._json)
+                        statuses.append(status._json)
                     if not context_free:
                         # get all the replies to this tweet and the replies of the replies recursively
                         for reply in get_replies(status):
@@ -213,20 +212,22 @@ def get_tweets(mps_file,
                             ruser_party = mps.loc[mps['Screen Name'] == "@{}".format(ruser.screen_name)]["Party"] \
                                 if ruser_is_mp else None
                             # save ruser
-                            print("save reply {} from user {} who replies to {}".format(reply.id, ruser.screen_name, reply.in_reply_to_status_id))
                             db_ruser_id = db.get_user(ruser.id_str, mps_db) or \
                                           db.save_user(ruser, mps_db, ruser_party, start_datetime, is_mp=ruser_is_mp)
                             # save the reply
                             if not db.get_tweet(reply.id_str, database):
+                                print("save reply {} from user {} who replies to {}".format(reply.id, ruser.screen_name,
+                                                                                            reply.in_reply_to_status_id))
+
                                 db.save_tweet(reply, db_ruser_id, mps_db)
-                            statuses.append(reply._json)
+                                statuses.append(reply._json)
 
             if len(tmp_statuses) == 0 or tmp_statuses[-1].created_at < start_datetime:
                 break
             else:
                 max_id = tmp_statuses[-1].id
 
-        print "Tweets count", len(statuses)
+        print "Total tweets from MP {} and the replies: {}".format(username, len(statuses))
         # save tweets to json
         if len(statuses) > 0:
             with open(fname, 'a') as f:
@@ -285,6 +286,12 @@ def plot_followers(database):
 
 if __name__ == "__main__":
     dir_path = os.path.dirname(os.path.realpath(__file__))
+    # create databases folder if it doesn't exist
+    if not os.path.exists(os.path.join(dir_path, "databases")):
+        os.makedirs(os.path.join(dir_path, "databases"))
+    # create json_files folder if it doesn't exist
+    if not os.path.exists(os.path.join(dir_path, "json_files")):
+        os.makedirs(os.path.join(dir_path, "json_files"))
     # retrieve tweets from the UK MPs
     country = "UK"
     # retrieve tweets from the GR MEPs
