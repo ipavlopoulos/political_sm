@@ -154,6 +154,8 @@ def get_tweets(mps_file,
     dateparse = lambda x: pd.datetime.strptime(x, '%d/%m/%Y')
     # read mps csv file
     if country == "UK":
+        # ip patching
+        mps_file = os.path.join(dir_path, mps_file)
         mps = pd.read_csv(mps_file)
         politicians = mps[mps['Screen Name'].str.startswith('@')]
         users_tuples = zip(politicians['Screen Name'], politicians['Party'], [start_date] * politicians.shape[0])
