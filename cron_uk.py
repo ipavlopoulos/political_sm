@@ -2,7 +2,7 @@ from crontab import CronTab
 from datetime import datetime, timedelta
 
 cron = CronTab(user='username')
-job = cron.new(command='/path/to/venv/bin/python /path/to/europarl/retrieve_tweets.py',
+job = cron.new(command='/path/to/venv/bin/python /path/to/europarl/retrieve_tweets.py UK >> /path/to/log/retrieve_tweets.log 2>&1',
                comment="Save the UK MPs tweets and the replies")
 # Run the task the same day every week 0 0 * * (day of execution)
 now = datetime.now()

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import json
-import os
+import os, sys
 import numpy as np
 import time
 
@@ -48,7 +48,7 @@ class listener(StreamListener):
 
 
 def get_meps_ids():
-    meps = pd.read_csv('gr_candidate_meps.csv')
+    meps = pd.read_csv('gr_meps_2019.csv')
     usernames = meps[meps['Screen Name'].str.startswith('@')]['Screen Name']
     ids = []
     for username in usernames:
@@ -143,21 +143,21 @@ def get_tweets(mps_file,
     """
     # create json file to dump tweets
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    if country == "UK":
-        fname = os.path.join(dir_path, 'json_files', 'tweets_%s_to_%s.json' % (start_date, end_date))
-    else: # if country == "GR"
-        fname = os.path.join(dir_path, 'json_files', 'tweets_anndate_to_%s.json' % end_date)
+    if not context_free:
+        fname = os.path.join(dir_path, 'json_files', 'tweets_%s_%s_to_%s.json' % (country, start_date, end_date))
+    else:  # if country == "GR" and without context
+        fname = os.path.join(dir_path, 'json_files', 'tweets_no_cnxt_%s_anndate_to_%s.json' % (country, end_date))
     with open(fname, 'a'):
         os.utime(fname, None)
 
     # parse date columns to datetime
     dateparse = lambda x: pd.datetime.strptime(x, '%d/%m/%Y')
     # read mps csv file
-    if country == "UK":
+    if not context_free:
         mps = pd.read_csv(mps_file)
         politicians = mps[mps['Screen Name'].str.startswith('@')]
         users_tuples = zip(politicians['Screen Name'], politicians['Party'], [start_date] * politicians.shape[0])
-    else: # if country == "GR"
+    else:  # if country == "GR" and context free
         meps = pd.read_csv(mps_file, parse_dates=['Announcement date'], date_parser=dateparse)
         politicians = meps[meps['Screen Name'].str.startswith('@')]
         users_tuples = zip(politicians['Screen Name'], politicians['Party'],
@@ -236,7 +236,7 @@ def get_tweets(mps_file,
 
 def search_tweets_referring_meps(database):
     # get candidate meps screen names
-    meps = pd.read_csv('gr_candidate_meps.csv')
+    meps = pd.read_csv('gr_meps_2019.csv')
     twitter_meps = meps[meps['Twitter username'].str.startswith('@')]['Screen Name'].str[1:]
     # find tweets mentioning the candidates accounts
     operators = ["@", "to:", "#"]
@@ -292,13 +292,12 @@ if __name__ == "__main__":
     # create json_files folder if it doesn't exist
     if not os.path.exists(os.path.join(dir_path, "json_files")):
         os.makedirs(os.path.join(dir_path, "json_files"))
-    # retrieve tweets from the UK MPs
-    country = "UK"
-    # retrieve tweets from the GR MEPs
-    # country = "GR"
+    # retrieve tweets from the UK MPs or GR MEPs
+    country = sys.argv[1]
+    print "Retrieve tweets from %s" % country
     if country == "UK":
         database = os.path.join(dir_path, "databases", "twitter_with_cntx_uk.db")
-        mps_file = "uk_mps.csv"
+        mps_file = "uk_mps_2019.csv"
         # set start_date seven days before current datetime
         now = datetime.now()
         start_date = now - timedelta(days=7)
@@ -306,10 +305,14 @@ if __name__ == "__main__":
         end_date = now - timedelta(days=1)
         context_free = False
     else:  # if country == "GR"
-        database = os.path.join(dir_path, "databases", "twitter_without_cntx_gr.db")
-        mps_file = "gr_candidate_meps.csv"
-        start_date = None
-        context_free = True
+        database = os.path.join(dir_path, "databases", "twitter_with_cntx_gr.db")
+        mps_file = "gr_meps_2019.csv"
+        # set start_date seven days before current datetime
+        now = datetime.now()
+        start_date = now - timedelta(days=7)
+        # set end_date one day before current datetime to catch as much replies as possible
+        end_date = now - timedelta(days=1)
+        context_free = False
 
     # create sqlite db and create tables
     if not os.path.exists(database):
