@@ -152,6 +152,7 @@ def get_tweets(mps_file,
 
     # parse date columns to datetime
     dateparse = lambda x: pd.datetime.strptime(x, '%d/%m/%Y')
+    mps_file = os.path.join(dir_path, mps_file)
     # read mps csv file
     if not context_free:
         mps = pd.read_csv(mps_file)
