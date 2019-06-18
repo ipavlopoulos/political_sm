@@ -294,8 +294,8 @@ if __name__ == "__main__":
         os.makedirs(os.path.join(dir_path, "json_files"))
     # retrieve tweets from the UK MPs or GR MEPs
     country = sys.argv[1]
-    print "Retrieve tweets from %s" % country
     if country == "UK":
+        print "Retrieve the tweets of the UK MPs"
         database = os.path.join(dir_path, "databases", "twitter_with_cntx_uk.db")
         mps_file = "uk_mps_2019.csv"
         # set start_date seven days before current datetime
@@ -304,9 +304,20 @@ if __name__ == "__main__":
         # set end_date one day before current datetime to catch as much replies as possible
         end_date = now - timedelta(days=1)
         context_free = False
-    else:  # if country == "GR"
+    elif country == "GR":
+        print "Retrieve the tweets of the Greek MEPs"
         database = os.path.join(dir_path, "databases", "twitter_with_cntx_gr.db")
         mps_file = "gr_meps_2019.csv"
+        # set start_date seven days before current datetime
+        now = datetime.now()
+        start_date = now - timedelta(days=7)
+        # set end_date one day before current datetime to catch as much replies as possible
+        end_date = now - timedelta(days=1)
+        context_free = False
+    elif country == "GR_heads":
+        print "Retrieve the tweets of the Greek parties heads"
+        database = os.path.join(dir_path, "databases", "twitter_with_cntx_gr_heads.db")
+        mps_file = "gr_party_heads_2019.csv"
         # set start_date seven days before current datetime
         now = datetime.now()
         start_date = now - timedelta(days=7)
